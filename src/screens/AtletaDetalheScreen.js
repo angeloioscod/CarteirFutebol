@@ -22,16 +22,12 @@ export function AtletaDetalheScreen({ route, navigation }) {
 
   useEffect(() => { loadAtleta(); loadPresencas() }, [])
 
-async function loadAtleta() {
-  const { data } = await supabase
-    .from('atletas').select('*').eq('id', atletaId).single()
-  if (data) {
-    console.log('ATLETA DATA:', JSON.stringify(data))
-    setAtleta(data)
+  async function loadAtleta() {
+    const { data, error } = await supabase
+      .from('atletas').select('*').eq('id', atletaId).single()
+    if (error) { console.log('Erro:', error); return }
+    if (data) setAtleta({ ...data, mes_pago: data.mes_pago || '' })
   }
-}
-
-  
 
   async function loadPresencas() {
     const { data } = await supabase
@@ -44,14 +40,14 @@ async function loadAtleta() {
   }
 
   async function togglePay() {
-    const novo = atleta.status === 'pendente' ? 'pago' : 'pendente'
+    const novo = atleta.status === 'pago' ? 'pendente' : 'pago'
     const updates = {
       status: novo,
       mes_pago: novo === 'pago' ? getMonthRef() : '',
       comprovante_url: novo === 'pendente' ? null : atleta.comprovante_url
     }
     await supabase.from('atletas').update(updates).eq('id', atletaId)
-    setAtleta({ ...atleta, ...updates })
+    setAtleta(prev => ({ ...prev, ...updates }))
     Alert.alert(
       novo === 'pago' ? '✅ Confirmado!' : '⚠️ Pendente',
       'Status atualizado.'
@@ -61,53 +57,34 @@ async function loadAtleta() {
   async function uploadComprovante() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.7
+      allowsEditing: true, quality: 0.7
     })
     if (result.canceled) return
     setLoading(true)
     try {
       const fileName = `comp_${atletaId}_${Date.now()}.jpg`
       const url = await uploadImagem(result.assets[0].uri, fileName)
-      if (!url) {
-        Alert.alert('Erro', 'Falha no upload da imagem.')
-        setLoading(false)
-        return
-      }
+      if (!url) { Alert.alert('Erro', 'Falha no upload.'); setLoading(false); return }
       await supabase.from('atletas').update({
-        comprovante_url: url,
-        status: 'pago',
-        mes_pago: getMonthRef()
+        comprovante_url: url, status: 'pago', mes_pago: getMonthRef()
       }).eq('id', atletaId)
       setAtleta(prev => ({
-        ...prev,
-        comprovante_url: url,
-        status: 'pago',
-        mes_pago: getMonthRef()
+        ...prev, comprovante_url: url, status: 'pago', mes_pago: getMonthRef()
       }))
       Alert.alert('✅ Sucesso!', 'Comprovante anexado!')
-    } catch (e) {
-      Alert.alert('Erro', e.message)
-    }
+    } catch (e) { Alert.alert('Erro', e.message) }
     setLoading(false)
   }
 
   async function removerAtleta() {
-    Alert.alert(
-      'Remover Atleta',
-      `Deseja remover ${atleta.nome}?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Remover', style: 'destructive',
-          onPress: async () => {
-            await supabase.from('presencas').delete().eq('atleta_id', atletaId)
-            await supabase.from('atletas').delete().eq('id', atletaId)
-            navigation.goBack()
-          }
-        }
-      ]
-    )
+    Alert.alert('Remover Atleta', `Deseja remover ${atleta.nome}?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Remover', style: 'destructive', onPress: async () => {
+        await supabase.from('presencas').delete().eq('atleta_id', atletaId)
+        await supabase.from('atletas').delete().eq('id', atletaId)
+        navigation.goBack()
+      }}
+    ])
   }
 
   if (!atleta) return (
@@ -116,12 +93,8 @@ async function loadAtleta() {
     </View>
   )
 
-  const isPago   = atleta.status === 'pago'
-  const mesRef = atleta.mes_pago && atleta.mes_pago !== ''
-  ? atleta.mes_pago
-   : atleta.created_at
-   ? new Date(atleta.created_at).toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' })
-   : '—'
+  const isPago   = (atleta.status || '').trim().toLowerCase() === 'pago'
+  const mesRef   = atleta.mes_pago || '—'
   const presVals = Object.values(presencas)
   const total    = presVals.length
   const presente = presVals.filter(v => v === 'presente').length
@@ -161,11 +134,11 @@ async function loadAtleta() {
 
         {/* INFO */}
         <View style={{ paddingHorizontal: 14 }}>
-          <InfoRow label="Responsável"  value={atleta.responsavel} />
-          <InfoRow label="Telefone"     value={atleta.telefone} />
-          <InfoRow label="Nascimento"   value={String(atleta.nascimento)} />
-          <InfoRow label="Categoria"    value={atleta.categoria} />
-          <InfoRow label="Posição"      value={atleta.posicao} />
+          <InfoRow label="Responsável" value={atleta.responsavel} />
+          <InfoRow label="Telefone"    value={atleta.telefone} />
+          <InfoRow label="Nascimento"  value={String(atleta.nascimento)} />
+          <InfoRow label="Categoria"   value={atleta.categoria} />
+          <InfoRow label="Posição"     value={atleta.posicao} />
           <InfoRow
             label="Presença"
             value={`${pct}% (${presente}/${total})`}
@@ -201,10 +174,10 @@ async function loadAtleta() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.actionBtn, { backgroundColor: 'rgba(41,121,255,0.1)', borderColor: Colors.blue }]}
+            style={[styles.actionBtn, { backgroundColor: 'rgba(41,121,255,0.1)', borderColor: '#2979FF' }]}
             onPress={uploadComprovante}
           >
-            <Text style={[styles.actionBtnText, { color: Colors.blue }]}>
+            <Text style={[styles.actionBtnText, { color: '#2979FF' }]}>
               {loading ? 'Enviando...' : atleta.comprovante_url ? '📎 Trocar Comprovante' : '📎 Anexar Comprovante Pix'}
             </Text>
           </TouchableOpacity>
@@ -279,7 +252,7 @@ const styles = StyleSheet.create({
   statusPago:       { backgroundColor: 'rgba(0,200,83,0.1)', borderColor: 'rgba(0,200,83,0.3)' },
   statusPend:       { backgroundColor: 'rgba(255,23,68,0.1)', borderColor: 'rgba(255,23,68,0.3)' },
   statusTxt:        { fontSize: 18, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-  statusSub:        { fontSize: 12, color: Colors.muted, marginTop: 2 },
+  statusSub:        { fontSize: 13, color: Colors.white, marginTop: 4, fontWeight: '600' },
   compSection:      { marginHorizontal: 14, marginTop: 8, backgroundColor: Colors.card, borderRadius: 14, borderWidth: 1, borderColor: Colors.border, padding: 14, overflow: 'hidden' },
   compTitle:        { fontSize: 10, color: Colors.muted, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 10 },
   compImg:          { width: '100%', height: 180, borderRadius: 10 },
