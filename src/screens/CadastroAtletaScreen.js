@@ -105,10 +105,15 @@ export function CadastroAtletaScreen({ route, navigation }) {
         onVoltar?.()
         navigation.goBack()
       } else {
-        const { count } = await supabase
-          .from('atletas')
-          .select('id', { count: 'exact', head: true })
-        const id          = genAtletaId((count || 0) + 1)
+        const { data: todosIds } = await supabase .from('atletas').select('id')
+        let proximoNum = 1
+        if (todosIds && todosIds.length > 0) { const nums = todosIds.map(a => {
+          const partes = a.id.split('-')
+          return parseInt(partes[partes.length - 1]) || 0
+          })
+          proximoNum = Math.max(...nums) + 1
+          }
+          const id = genAtletaId(proximoNum)
         const novaFotoUrl = await uploadFoto(id)
         const status      = isDue() ? 'pendente' : 'pago'
         await supabase.from('atletas').insert({
