@@ -9,9 +9,9 @@ import { Colors } from '../config/theme'
 
 export function ScannerScreen({ navigation }) {
   const [permission, requestPermission] = useCameraPermissions()
-  const [scanned, setScanned]     = useState(false)
-  const [loading, setLoading]     = useState(false)
-  const [atleta, setAtleta]       = useState(null)
+  const [scanned, setScanned]           = useState(false)
+  const [loading, setLoading]           = useState(false)
+  const [atleta, setAtleta]             = useState(null)
   const [modalVisible, setModalVisible] = useState(false)
 
   if (!permission) {
@@ -42,7 +42,6 @@ export function ScannerScreen({ navigation }) {
     if (scanned || loading) return
     setScanned(true)
     setLoading(true)
-
     try {
       const codigo = data.trim().toUpperCase()
       const { data: atletaData, error } = await supabase
@@ -58,7 +57,8 @@ export function ScannerScreen({ navigation }) {
           [{ text: 'OK', onPress: () => setScanned(false) }]
         )
       } else {
-        setAtleta(atletaData)
+        // Igual ao AtletaDetalheScreen — garante mes_pago preenchido
+        setAtleta({ ...atletaData, mes_pago: atletaData.mes_pago || '' })
         setModalVisible(true)
       }
     } catch (e) {
@@ -74,7 +74,9 @@ export function ScannerScreen({ navigation }) {
     setScanned(false)
   }
 
-  const isPago = atleta?.status === 'pago'
+  // Igual ao AtletaDetalheScreen
+  const isPago  = (atleta?.status || '').trim().toLowerCase() === 'pago'
+  const mesRef  = atleta?.mes_pago || '—'
 
   return (
     <View style={styles.root}>
@@ -101,7 +103,6 @@ export function ScannerScreen({ navigation }) {
         {/* ÁREA DE SCAN */}
         <View style={styles.scanArea}>
           <View style={styles.scanBox}>
-            {/* Cantos do scanner */}
             <View style={[styles.canto, styles.cantoTopLeft]} />
             <View style={[styles.canto, styles.cantoTopRight]} />
             <View style={[styles.canto, styles.cantoBottomLeft]} />
@@ -140,9 +141,11 @@ export function ScannerScreen({ navigation }) {
 
             {/* NOME */}
             <Text style={styles.modalNome}>{atleta?.nome}</Text>
-            <Text style={styles.modalCodigo}>{atleta?.id} · {atleta?.categoria}</Text>
+            <Text style={styles.modalCodigo}>
+              {atleta?.id} · {atleta?.categoria}
+            </Text>
 
-            {/* STATUS */}
+            {/* STATUS — igual ao AtletaDetalheScreen */}
             <View style={[
               styles.modalStatus,
               isPago ? styles.modalStatusPago : styles.modalStatusPend
@@ -155,8 +158,8 @@ export function ScannerScreen({ navigation }) {
               </Text>
               <Text style={styles.modalStatusSub}>
                 {isPago
-                  ? `Referência: ${atleta?.mes_pago || '—'}`
-                  : 'Entre em contato com o professor'}
+                  ? `Referência: ${mesRef}`
+                  : 'Aguardando pagamento · Vence dia 05'}
               </Text>
             </View>
 
@@ -181,7 +184,10 @@ export function ScannerScreen({ navigation }) {
               <TouchableOpacity style={styles.btnScanNovo} onPress={fecharModal}>
                 <Text style={styles.btnScanNovoText}>📷 Escanear Outro</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.btnVoltar2} onPress={() => navigation.goBack()}>
+              <TouchableOpacity
+                style={styles.btnVoltar2}
+                onPress={() => navigation.goBack()}
+              >
                 <Text style={styles.btnVoltar2Text}>Voltar</Text>
               </TouchableOpacity>
             </View>
@@ -224,11 +230,11 @@ const styles = StyleSheet.create({
   modalStatusPago:    { backgroundColor: 'rgba(0,200,83,0.1)', borderColor: 'rgba(0,200,83,0.3)' },
   modalStatusPend:    { backgroundColor: 'rgba(255,23,68,0.1)', borderColor: 'rgba(255,23,68,0.3)' },
   modalStatusText:    { fontSize: 18, fontWeight: '700', textTransform: 'uppercase' },
-  modalStatusSub:     { fontSize: 12, color: Colors.muted, marginTop: 4 },
+  modalStatusSub:     { fontSize: 13, color: Colors.white, marginTop: 4, fontWeight: '600' },
   modalInfo:          { backgroundColor: Colors.card, borderRadius: 12, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: Colors.border },
-  modalInfoRow:       { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  modalInfoLbl:       { fontSize: 12, color: Colors.muted },
-  modalInfoVal:       { fontSize: 12, color: Colors.text, fontWeight: '600' },
+  modalInfoRow:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: Colors.border },
+  modalInfoLbl:       { fontSize: 12, color: Colors.muted, flex: 1 },
+  modalInfoVal:       { fontSize: 12, color: Colors.text, fontWeight: '600', flex: 1, textAlign: 'right' },
   modalBtns:          { gap: 8 },
   btnScanNovo:        { backgroundColor: Colors.green, borderRadius: 12, padding: 14, alignItems: 'center' },
   btnScanNovoText:    { color: '#000', fontWeight: '800', fontSize: 15 },
