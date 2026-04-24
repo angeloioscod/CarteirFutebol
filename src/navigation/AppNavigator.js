@@ -15,6 +15,7 @@ import { LoginScreen } from '../screens/LoginScreen'
 import { PresencaScreen } from '../screens/PresencaScreen'
 import { ProfAtletasScreen } from '../screens/ProfAtletasScreen'
 import { RelatorioScreen } from '../screens/RelatorioScreen'
+import { ScannerScreen } from '../screens/ScannerScreen'
 
 const Stack = createStackNavigator()
 const Tab   = createBottomTabNavigator()
@@ -165,6 +166,11 @@ export function AppNavigator() {
         <Stack.Screen
           name="AlunoWallet"
           component={AlunoWalletScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Scanner"
+          component={ScannerScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen

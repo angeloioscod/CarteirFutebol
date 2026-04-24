@@ -150,6 +150,11 @@ export function ProfAtletasScreen({ navigation }) {
             <Text style={{ fontSize: 20 }}>➕</Text>
             <Text style={[styles.actionLbl, { color: Colors.green }]}>Cadastrar</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.actionBtn}
+          onPress={() => navigation.navigate('Scanner')}>
+            <Text style={{ fontSize: 20 }}>📷</Text>
+            <Text style={styles.actionLbl}>Scanner</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.actionBtn} onPress={onRefresh}>
             <Text style={{ fontSize: 20 }}>🔄</Text>
             <Text style={styles.actionLbl}>Atualizar</Text>
