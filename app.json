@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Carteira Futebol",
-    "slug": "carteira-futebol",
+    "slug": "carteira-futebol-v1",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
@@ -12,10 +12,11 @@
       "package": "com.carteirafutebol.app",
       "versionCode": 1,
       "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "VIBRATE"
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.VIBRATE",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "ios": {
@@ -31,6 +32,11 @@
         }
       ],
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "94338463-c47b-4f59-a3f8-25080227a913"
+      }
+    }
   }
 }
